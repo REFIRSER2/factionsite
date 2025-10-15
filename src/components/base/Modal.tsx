@@ -6,9 +6,16 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  contentClassName?: string;
 }
 
-export const Modal = ({ isOpen, onClose, children, size = 'md' }: ModalProps) => {
+export const Modal = ({
+  isOpen,
+  onClose,
+  children,
+  size = 'md',
+  contentClassName,
+}: ModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -47,6 +54,7 @@ export const Modal = ({ isOpen, onClose, children, size = 'md' }: ModalProps) =>
               relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-auto
               bg-gray-900 border border-yellow-400/30 rounded-xl shadow-2xl
               backdrop-blur-md
+              ${contentClassName ?? ''}
             `}
           >
             {children}

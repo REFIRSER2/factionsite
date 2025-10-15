@@ -456,7 +456,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           onChange={(event) => setInfoForm((prev) => ({ ...prev, location: event.target.value }))}
         />
         <div>
-          <label className="block text-sm font-medium text-yellow-400 mb-2">관계 상태</label>
+          <label className="block text-sm font-medium text-yellow-200 mb-2">관계 상태</label>
           <div className="flex flex-wrap gap-3">
             {RELATIONSHIP_OPTIONS.map((option) => (
               <button
@@ -467,8 +467,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium
                   ${
                     infoForm.relationship === option.value
-                      ? 'border-yellow-400 text-yellow-300 bg-yellow-400/10'
-                      : 'border-yellow-400/20 text-gray-400 hover:text-yellow-300'
+                      ? 'border-yellow-500 text-yellow-200 bg-yellow-500/15 shadow-[0_0_12px_rgba(234,179,8,0.15)]'
+                      : 'border-yellow-500/40 text-gray-400 hover:text-yellow-200'
                   }
                 `}
               >
@@ -489,14 +489,14 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
         </Button>
       </div>
       <div className="md:col-span-2">
-        <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 space-y-6">
+        <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-yellow-200">데이터 요약</h3>
+            <h3 className="text-lg font-semibold text-yellow-100">데이터 요약</h3>
             <span className="text-xs text-gray-500">각 탭에서 세부 수정 및 삭제 가능합니다.</span>
           </div>
           <div className="space-y-4">
             <section>
-              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+              <h4 className="text-sm font-semibold text-yellow-200 uppercase tracking-widest mb-2">
                 조직원 ({organizationMembers.length})
               </h4>
               {organizationMembers.length > 0 ? (
@@ -519,7 +519,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               )}
             </section>
             <section>
-              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+              <h4 className="text-sm font-semibold text-yellow-200 uppercase tracking-widest mb-2">
                 사업체 ({organizationBusinesses.length})
               </h4>
               {organizationBusinesses.length > 0 ? (
@@ -539,7 +539,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               )}
             </section>
             <section>
-              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+              <h4 className="text-sm font-semibold text-yellow-200 uppercase tracking-widest mb-2">
                 증거 ({organizationEvidence.length})
               </h4>
               {organizationEvidence.length > 0 ? (
@@ -559,7 +559,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               )}
             </section>
             <section>
-              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+              <h4 className="text-sm font-semibold text-yellow-200 uppercase tracking-widest mb-2">
                 지도 이미지 ({organizationMapImages.length})
               </h4>
               {organizationMapImages.length > 0 ? (
@@ -567,7 +567,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   {organizationMapImages.slice(0, 4).map((image) => (
                     <div
                       key={image.id}
-                      className="relative rounded-lg overflow-hidden border border-yellow-400/20"
+                      className="relative rounded-lg overflow-hidden border border-yellow-500/30"
                     >
                       <img src={image.url} alt={image.title} className="w-full h-24 object-cover" />
                       <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-xs text-gray-200 truncate">
@@ -595,7 +595,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div className="space-y-4">
         {membersDraft.map((member, index) => (
-        <div key={member.id} className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-4 space-y-4">
+        <div key={member.id} className="bg-black/70 border border-yellow-500/30 rounded-xl p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="이름"
@@ -645,9 +645,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-yellow-400 mb-2">프로필 사진</label>
+            <label className="block text-sm font-medium text-yellow-200 mb-2">프로필 사진</label>
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-400/30 bg-gray-900 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-500/40 bg-black flex items-center justify-center">
                 {member.photo ? (
                   <img src={member.photo} alt={member.name || 'profile'} className="w-full h-full object-cover" />
                 ) : (
@@ -708,11 +708,11 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           />
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-400/30">
+              <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-500/40">
                 {member.photo ? (
                   <img src={member.photo} alt={member.name || 'profile'} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-900">이미지 없음</div>
+                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-black">이미지 없음</div>
                 )}
               </div>
               <span className="text-sm text-gray-400">ID: {member.id}</span>
@@ -763,9 +763,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       </div>
       </div>
 
-      <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
+      <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">조직원 목록</h3>
+          <h3 className="text-lg font-semibold text-yellow-100">조직원 목록</h3>
           <span className="text-xs text-gray-500">{organizationMembers.length}명</span>
         </div>
         {organizationMembers.length > 0 ? (
@@ -773,11 +773,11 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             {organizationMembers.map((member) => (
               <div
                 key={member.id}
-                className="border border-yellow-400/10 bg-black/30 rounded-lg p-4 space-y-3"
+                className="border border-yellow-500/20 bg-black/30 rounded-lg p-4 space-y-3"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-400/30 bg-gray-900">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-500/40 bg-black">
                       {member.photo ? (
                         <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
@@ -827,7 +827,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div className="space-y-4">
         {businessDraft.map((business, index) => (
-        <div key={business.id} className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-4 space-y-4">
+        <div key={business.id} className="bg-black/70 border border-yellow-500/30 rounded-xl p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="사업체 명"
@@ -900,8 +900,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-yellow-400">대표 이미지</label>
-              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900 flex items-center justify-center">
+              <label className="block text-sm font-medium text-yellow-200">대표 이미지</label>
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black flex items-center justify-center">
                 {business.image1 ? (
                   <img src={business.image1} alt={`${business.name || '사업체'} 대표`} className="w-full h-full object-cover" />
                 ) : (
@@ -949,8 +949,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               </div>
             </div>
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-yellow-400">추가 이미지</label>
-              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900 flex items-center justify-center">
+              <label className="block text-sm font-medium text-yellow-200">추가 이미지</label>
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black flex items-center justify-center">
                 {business.image2 ? (
                   <img src={business.image2} alt={`${business.name || '사업체'} 추가`} className="w-full h-full object-cover" />
                 ) : (
@@ -1048,9 +1048,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       </div>
       </div>
 
-      <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
+      <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">사업체 목록</h3>
+          <h3 className="text-lg font-semibold text-yellow-100">사업체 목록</h3>
           <span className="text-xs text-gray-500">{organizationBusinesses.length}곳</span>
         </div>
         {organizationBusinesses.length > 0 ? (
@@ -1058,7 +1058,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             {organizationBusinesses.map((business) => (
               <div
                 key={business.id}
-                className="border border-yellow-400/10 bg-black/30 rounded-lg p-4 space-y-3"
+                className="border border-yellow-500/20 bg-black/30 rounded-lg p-4 space-y-3"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -1087,7 +1087,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   </div>
                 </dl>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black">
                     {business.image1 ? (
                       <img src={business.image1} alt={`${business.name} 대표`} className="w-full h-full object-cover" />
                     ) : (
@@ -1097,11 +1097,11 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                     )}
                   </div>
                   {business.image2 ? (
-                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black">
                       <img src={business.image2} alt={`${business.name} 추가`} className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/10 bg-black/30 flex items-center justify-center text-xs text-gray-500">
+                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/20 bg-black/30 flex items-center justify-center text-xs text-gray-500">
                       추가 이미지 없음
                     </div>
                   )}
@@ -1122,7 +1122,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div className="space-y-4">
         {evidenceDraft.map((item, index) => (
-        <div key={item.id} className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-4 space-y-4">
+        <div key={item.id} className="bg-black/70 border border-yellow-500/30 rounded-xl p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="증거 ID"
@@ -1183,7 +1183,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           />
 
           <div className="space-y-3">
-            <label className="block text-sm font-medium text-yellow-400">이미지 첨부</label>
+            <label className="block text-sm font-medium text-yellow-200">이미지 첨부</label>
             <div className="flex flex-wrap items-center gap-2">
               <input
                 ref={(element) => {
@@ -1215,7 +1215,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {item.images.map((imageUrl, imageIndex) => (
                   <div key={`${item.id}-draft-image-${imageIndex}`} className="space-y-2">
-                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black">
                       <img
                         src={imageUrl}
                         alt={`${item.id} evidence ${imageIndex + 1}`}
@@ -1235,7 +1235,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 border border-dashed border-yellow-400/20 rounded-lg p-3 bg-black/20">
+              <p className="text-xs text-gray-500 border border-dashed border-yellow-500/30 rounded-lg p-3 bg-black/20">
                 첨부된 이미지가 없습니다.
               </p>
             )}
@@ -1257,7 +1257,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   ${
                     item.used
                       ? 'border-green-400 text-green-300 bg-green-400/10'
-                      : 'border-yellow-400/20 text-gray-400 hover:text-yellow-300'
+                      : 'border-yellow-500/30 text-gray-400 hover:text-yellow-200'
                   }
                 `}
               >
@@ -1311,9 +1311,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       </div>
       </div>
 
-      <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
+      <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">증거 목록</h3>
+          <h3 className="text-lg font-semibold text-yellow-100">증거 목록</h3>
           <span className="text-xs text-gray-500">{organizationEvidence.length}건</span>
         </div>
         {organizationEvidence.length > 0 ? (
@@ -1321,7 +1321,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             {organizationEvidence.map((item) => (
               <div
                 key={item.id}
-                className="border border-yellow-400/10 bg-black/30 rounded-lg p-4 space-y-3"
+                className="border border-yellow-500/20 bg-black/30 rounded-lg p-4 space-y-3"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -1339,20 +1339,20 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                     className={`px-2 py-1 rounded-full border text-[11px] font-semibold ${
                       item.used
                         ? 'border-green-400 text-green-300 bg-green-400/10'
-                        : 'border-yellow-400/20 text-gray-400'
+                        : 'border-yellow-500/30 text-gray-400'
                     }`}
                   >
                     {item.used ? '사용됨' : '미사용'}
                   </span>
                 </div>
-                <p className="text-sm text-gray-300 whitespace-pre-line border-t border-yellow-400/10 pt-3">
+                <p className="text-sm text-gray-300 whitespace-pre-line border-t border-yellow-500/20 pt-3">
                   {item.details || '세부 내용이 입력되지 않았습니다.'}
                 </p>
                 {item.images.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2">
                     {item.images.map((imageUrl, imageIndex) => (
                       <div key={`${item.id}-image-${imageIndex}`} className="space-y-2">
-                        <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                        <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30 bg-black">
                           <img
                             src={imageUrl}
                             alt={`${item.target || '증거'} 이미지 ${imageIndex + 1}`}
@@ -1400,7 +1400,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           mapDraft.map((image, index) => (
             <div
               key={image.id}
-              className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-4 space-y-4"
+              className="bg-black/70 border border-yellow-500/30 rounded-xl p-4 space-y-4"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
@@ -1432,7 +1432,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20">
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30">
                     <img src={image.url} alt={image.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1467,8 +1467,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             </div>
           ))
         ) : (
-          <div className="bg-gray-900/40 border border-dashed border-yellow-400/30 rounded-xl p-8 text-center space-y-3">
-            <i className="ri-map-pin-2-line text-4xl text-yellow-400" />
+          <div className="bg-black/60 border border-dashed border-yellow-500/40 rounded-xl p-8 text-center space-y-3">
+            <i className="ri-map-pin-2-line text-4xl text-yellow-200" />
             <p className="text-sm text-gray-400">등록된 지도 이미지가 없습니다. 새 이미지를 업로드해보세요.</p>
           </div>
         )}
@@ -1484,9 +1484,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       </div>
 
       <div className="space-y-4">
-        <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 space-y-4">
+        <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-yellow-200">지도 미리보기</h3>
+            <h3 className="text-lg font-semibold text-yellow-100">지도 미리보기</h3>
             {selectedMapPreview && (
               <span className="text-xs text-gray-500">
                 업데이트: {new Date(selectedMapPreview.uploadedAt).toLocaleString()}
@@ -1495,7 +1495,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           </div>
           {selectedMapPreview ? (
             <div className="space-y-3">
-              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20">
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-500/30">
                 <img
                   src={selectedMapPreview.url}
                   alt={selectedMapPreview.title}
@@ -1515,7 +1515,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   <i className="ri-external-link-line mr-1" /> 새 창에서 보기
                 </Button>
               </div>
-              <p className="text-sm text-gray-300 whitespace-pre-line border-t border-yellow-400/10 pt-3">
+              <p className="text-sm text-gray-300 whitespace-pre-line border-t border-yellow-500/20 pt-3">
                 {selectedMapPreview.notes || '비고가 입력되지 않았습니다.'}
               </p>
             </div>
@@ -1526,9 +1526,9 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           )}
         </div>
 
-        <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 space-y-4">
+        <div className="bg-black/70 border border-yellow-500/30 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-yellow-200">등록된 지도 목록</h3>
+            <h3 className="text-lg font-semibold text-yellow-100">등록된 지도 목록</h3>
             <span className="text-xs text-gray-500">{organizationMapImages.length}개</span>
           </div>
           {organizationMapImages.length > 0 ? (
@@ -1541,8 +1541,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                     key={image.id}
                     className={`border rounded-lg p-3 space-y-2 bg-black/30 transition-colors ${
                       isActive
-                        ? 'border-yellow-400/60'
-                        : 'border-yellow-400/10 hover:border-yellow-400/40'
+                        ? 'border-yellow-500/70'
+                        : 'border-yellow-500/20 hover:border-yellow-500/50'
                     }`}
                   >
                     <button
@@ -1550,7 +1550,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                       onClick={() => setSelectedMapPreviewId(image.id)}
                       className="block w-full focus:outline-none text-left space-y-2"
                     >
-                      <div className="relative aspect-video rounded-md overflow-hidden border border-yellow-400/20 bg-gray-900">
+                      <div className="relative aspect-video rounded-md overflow-hidden border border-yellow-500/30 bg-black">
                         <img src={image.url} alt={image.title} className="w-full h-full object-cover" />
                       </div>
                       <p className="text-sm text-white truncate">{image.title}</p>
@@ -1584,17 +1584,22 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
 
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
-      <div className="p-8 space-y-6">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
+      contentClassName="bg-black border-yellow-500/40 shadow-[0_0_45px_rgba(234,179,8,0.15)]"
+    >
+      <div className="p-8 space-y-6 bg-gradient-to-br from-black via-neutral-950 to-black text-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400/60">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-500/70">
               <img src={organization.logo} alt={organization.name} className="w-full h-full object-cover" />
             </div>
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-white font-orbitron">{organization.name}</h2>
               <p className="text-gray-400">{organization.location}</p>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-400/10 text-yellow-300 border border-yellow-400/40">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/15 text-yellow-200 border border-yellow-500/50">
                 {getRelationshipLabel(organization.relationship)}
               </span>
             </div>
@@ -1623,8 +1628,8 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                 px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium flex items-center space-x-2
                 ${
                   activeTab === tab.id
-                    ? 'border-yellow-400 text-yellow-300 bg-yellow-400/10'
-                    : 'border-yellow-400/20 text-gray-400 hover:text-yellow-300'
+                    ? 'border-yellow-500 text-yellow-200 bg-yellow-500/15 shadow-[0_0_20px_rgba(234,179,8,0.15)]'
+                    : 'border-yellow-500/40 text-gray-400 hover:text-yellow-200'
                 }
               `}
             >
@@ -1643,7 +1648,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
         </div>
 
         {feedback && (
-          <div className="text-sm text-yellow-300 bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-3">
+          <div className="text-sm text-yellow-200 bg-yellow-500/15 border border-yellow-500/30 rounded-lg p-3">
             {feedback}
           </div>
         )}

@@ -1,4 +1,4 @@
-import { Account } from '../types/account';
+import type { Account } from '../types/account';
 
 export const users: Account[] = [
   {

@@ -3,7 +3,7 @@ import { organizations as organizationSeed } from '../mocks/organizations'
 import { members as memberSeed } from '../mocks/members'
 import { businesses as businessSeed } from '../mocks/businesses'
 import { evidence as evidenceSeed } from '../mocks/evidence'
-import {
+import type {
   Business,
   EvidenceItem,
   Member,

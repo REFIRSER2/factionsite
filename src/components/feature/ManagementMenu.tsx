@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Modal } from '../base/Modal'
 import { Button } from '../base/Button'
 import { useAudio } from '../../hooks/useAudio'
-import { Account } from '../../types/account'
+import type { Account } from '../../types/account'
 
 export const ManagementMenu = () => {
   const [isOpen, setIsOpen] = useState(false)

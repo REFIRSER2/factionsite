@@ -5,7 +5,7 @@ import { Input } from '../../../components/base/Input'
 import { TextArea } from '../../../components/base/TextArea'
 import { useAudio } from '../../../hooks/useAudio'
 import { useOrganizationData } from '../../../context/OrganizationDataContext'
-import {
+import type {
   Business,
   EvidenceItem,
   MapImage,
@@ -73,6 +73,23 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
   const organizationMapImages = useMemo(
     () => (organization ? data.mapImages[organization.id] ?? [] : []),
     [organization, data.mapImages]
+  )
+
+  const persistedMemberIds = useMemo(
+    () => new Set(organizationMembers.map((member) => member.id)),
+    [organizationMembers]
+  )
+  const persistedBusinessIds = useMemo(
+    () => new Set(organizationBusinesses.map((business) => business.id)),
+    [organizationBusinesses]
+  )
+  const persistedEvidenceIds = useMemo(
+    () => new Set(organizationEvidence.map((item) => item.id)),
+    [organizationEvidence]
+  )
+  const persistedMapIds = useMemo(
+    () => new Set(organizationMapImages.map((item) => item.id)),
+    [organizationMapImages]
   )
 
   useEffect(() => {
@@ -214,23 +231,6 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     setFeedback('지도 이미지를 저장했습니다.')
     playTransitionSound()
   }
-
-  const persistedMemberIds = useMemo(
-    () => new Set(organizationMembers.map((member) => member.id)),
-    [organizationMembers]
-  )
-  const persistedBusinessIds = useMemo(
-    () => new Set(organizationBusinesses.map((business) => business.id)),
-    [organizationBusinesses]
-  )
-  const persistedEvidenceIds = useMemo(
-    () => new Set(organizationEvidence.map((item) => item.id)),
-    [organizationEvidence]
-  )
-  const persistedMapIds = useMemo(
-    () => new Set(organizationMapImages.map((item) => item.id)),
-    [organizationMapImages]
-  )
 
   const handleDeleteMember = (memberId: string) => {
     removeMember(organization.id, memberId)

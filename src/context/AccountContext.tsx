@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react'
 import { users as userSeed } from '../mocks/users'
-import { Account } from '../types/account'
+import type { Account } from '../types/account'
 
 interface AccountContextValue {
   accounts: Account[]

@@ -9,6 +9,7 @@ import {
   Member,
   Organization,
   OrganizationDataStore,
+  MapImage,
 } from '../types/organization'
 
 interface OrganizationDataContextValue {
@@ -17,6 +18,11 @@ interface OrganizationDataContextValue {
   setMembers: (organizationId: string, nextMembers: Member[]) => void
   setBusinesses: (organizationId: string, nextBusinesses: Business[]) => void
   setEvidence: (organizationId: string, nextEvidence: EvidenceItem[]) => void
+  setMapImages: (organizationId: string, nextImages: MapImage[]) => void
+  removeMember: (organizationId: string, memberId: string) => void
+  removeBusiness: (organizationId: string, businessId: string) => void
+  removeEvidence: (organizationId: string, evidenceId: string) => void
+  removeMapImage: (organizationId: string, imageId: string) => void
 }
 
 const STORAGE_KEY = 'vitalle-organization-data'
@@ -40,6 +46,7 @@ const loadInitialStore = (): OrganizationDataStore => {
       members: ensureRecord(organizationSeed, memberSeed as Record<string, Member[]>),
       businesses: ensureRecord(organizationSeed, businessSeed as Record<string, Business[]>),
       evidence: ensureRecord(organizationSeed, evidenceSeed as Record<string, EvidenceItem[]>),
+      mapImages: ensureRecord(organizationSeed, {} as Record<string, MapImage[]>),
     }
   }
 
@@ -53,6 +60,7 @@ const loadInitialStore = (): OrganizationDataStore => {
         members: ensureRecord(organizations, parsed.members ?? {}),
         businesses: ensureRecord(organizations, parsed.businesses ?? {}),
         evidence: ensureRecord(organizations, parsed.evidence ?? {}),
+        mapImages: ensureRecord(organizations, (parsed.mapImages ?? {}) as Record<string, MapImage[]>),
       }
     } catch (error) {
       console.warn('Failed to parse organization data store, using seed data.', error)
@@ -64,6 +72,7 @@ const loadInitialStore = (): OrganizationDataStore => {
     members: ensureRecord(organizationSeed, memberSeed as Record<string, Member[]>),
     businesses: ensureRecord(organizationSeed, businessSeed as Record<string, Business[]>),
     evidence: ensureRecord(organizationSeed, evidenceSeed as Record<string, EvidenceItem[]>),
+    mapImages: ensureRecord(organizationSeed, {} as Record<string, MapImage[]>),
   }
 }
 
@@ -118,8 +127,73 @@ export const OrganizationDataProvider = ({ children }: { children: ReactNode }) 
     }))
   }
 
+  const setMapImages = (organizationId: string, nextImages: MapImage[]) => {
+    setStore((prev) => ({
+      ...prev,
+      mapImages: ensureRecord(prev.organizations, {
+        ...prev.mapImages,
+        [organizationId]: nextImages,
+      }),
+    }))
+  }
+
+  const removeMember = (organizationId: string, memberId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      members: ensureRecord(prev.organizations, {
+        ...prev.members,
+        [organizationId]: (prev.members[organizationId] ?? []).filter((member) => member.id !== memberId),
+      }),
+    }))
+  }
+
+  const removeBusiness = (organizationId: string, businessId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      businesses: ensureRecord(prev.organizations, {
+        ...prev.businesses,
+        [organizationId]: (prev.businesses[organizationId] ?? []).filter(
+          (business) => business.id !== businessId
+        ),
+      }),
+    }))
+  }
+
+  const removeEvidence = (organizationId: string, evidenceId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      evidence: ensureRecord(prev.organizations, {
+        ...prev.evidence,
+        [organizationId]: (prev.evidence[organizationId] ?? []).filter(
+          (evidence) => evidence.id !== evidenceId
+        ),
+      }),
+    }))
+  }
+
+  const removeMapImage = (organizationId: string, imageId: string) => {
+    setStore((prev) => ({
+      ...prev,
+      mapImages: ensureRecord(prev.organizations, {
+        ...prev.mapImages,
+        [organizationId]: (prev.mapImages[organizationId] ?? []).filter((image) => image.id !== imageId),
+      }),
+    }))
+  }
+
   const value = useMemo(
-    () => ({ data: store, updateOrganization, setMembers, setBusinesses, setEvidence }),
+    () => ({
+      data: store,
+      updateOrganization,
+      setMembers,
+      setBusinesses,
+      setEvidence,
+      setMapImages,
+      removeMember,
+      removeBusiness,
+      removeEvidence,
+      removeMapImage,
+    }),
     [store]
   )
 

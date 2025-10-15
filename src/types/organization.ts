@@ -48,9 +48,18 @@ export interface EvidenceItem {
   images: string[]
 }
 
+export interface MapImage {
+  id: string
+  title: string
+  url: string
+  notes: string
+  uploadedAt: string
+}
+
 export interface OrganizationDataStore {
   organizations: Organization[]
   members: Record<string, Member[]>
   businesses: Record<string, Business[]>
   evidence: Record<string, EvidenceItem[]>
+  mapImages: Record<string, MapImage[]>
 }

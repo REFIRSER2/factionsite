@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Modal } from '../../../components/base/Modal'
 import { Button } from '../../../components/base/Button'
 import { Input } from '../../../components/base/Input'
 import { TextArea } from '../../../components/base/TextArea'
 import { useAudio } from '../../../hooks/useAudio'
 import { useOrganizationData } from '../../../context/OrganizationDataContext'
-import { Business, EvidenceItem, Member, OrganizationRelationship } from '../../../types/organization'
+import {
+  Business,
+  EvidenceItem,
+  MapImage,
+  Member,
+  OrganizationRelationship,
+} from '../../../types/organization'
 
 interface OrganizationModalProps {
   organizationId: string | null
@@ -33,7 +39,18 @@ const getRelationshipLabel = (value: OrganizationRelationship) => {
 }
 
 export const OrganizationModal = ({ organizationId, isOpen, onClose }: OrganizationModalProps) => {
-  const { data, updateOrganization, setMembers, setBusinesses, setEvidence } = useOrganizationData()
+  const {
+    data,
+    updateOrganization,
+    setMembers,
+    setBusinesses,
+    setEvidence,
+    setMapImages,
+    removeMember,
+    removeBusiness,
+    removeEvidence,
+    removeMapImage,
+  } = useOrganizationData()
   const { playClickSound, playTransitionSound } = useAudio()
 
   const organization = useMemo(
@@ -53,6 +70,10 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     () => (organization ? data.evidence[organization.id] ?? [] : []),
     [organization, data.evidence]
   )
+  const organizationMapImages = useMemo(
+    () => (organization ? data.mapImages[organization.id] ?? [] : []),
+    [organization, data.mapImages]
+  )
 
   useEffect(() => {
     if (isOpen && organizationId && !organization) {
@@ -60,7 +81,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     }
   }, [isOpen, organizationId, organization, onClose])
 
-  const [activeTab, setActiveTab] = useState<'info' | 'members' | 'businesses' | 'evidence'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'members' | 'businesses' | 'evidence' | 'maps'>('info')
   const [infoForm, setInfoForm] = useState({
     name: '',
     description: '',
@@ -70,7 +91,10 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
   const [membersDraft, setMembersDraft] = useState<EditableMember[]>([])
   const [businessDraft, setBusinessDraft] = useState<EditableBusiness[]>([])
   const [evidenceDraft, setEvidenceDraft] = useState<EditableEvidence[]>([])
+  const [mapDraft, setMapDraft] = useState<(MapImage & { isNew?: boolean })[]>([])
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [pendingMapIndex, setPendingMapIndex] = useState<number | null>(null)
+  const mapFileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!organization || !organizationId) {
@@ -115,6 +139,13 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       }))
     )
   }, [organization, organizationId, organizationEvidence])
+
+  useEffect(() => {
+    if (!organization || !organizationId) {
+      return
+    }
+    setMapDraft(organizationMapImages.map((image) => ({ ...image, isNew: false })))
+  }, [organization, organizationId, organizationMapImages])
 
   useEffect(() => {
     if (organizationId) {
@@ -175,6 +206,120 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     playTransitionSound()
   }
 
+  const handleSaveMapImages = () => {
+    const sanitized = mapDraft
+      .filter((image) => image.url.trim().length > 0)
+      .map(({ isNew, ...image }) => image)
+    setMapImages(organization.id, sanitized)
+    setFeedback('지도 이미지를 저장했습니다.')
+    playTransitionSound()
+  }
+
+  const persistedMemberIds = useMemo(
+    () => new Set(organizationMembers.map((member) => member.id)),
+    [organizationMembers]
+  )
+  const persistedBusinessIds = useMemo(
+    () => new Set(organizationBusinesses.map((business) => business.id)),
+    [organizationBusinesses]
+  )
+  const persistedEvidenceIds = useMemo(
+    () => new Set(organizationEvidence.map((item) => item.id)),
+    [organizationEvidence]
+  )
+  const persistedMapIds = useMemo(
+    () => new Set(organizationMapImages.map((item) => item.id)),
+    [organizationMapImages]
+  )
+
+  const handleDeleteMember = (memberId: string) => {
+    removeMember(organization.id, memberId)
+    setMembersDraft((prev) => prev.filter((member) => member.id !== memberId))
+    setFeedback('조직원 항목을 삭제했습니다.')
+    playTransitionSound()
+  }
+
+  const handleDeleteBusiness = (businessId: string) => {
+    removeBusiness(organization.id, businessId)
+    setBusinessDraft((prev) => prev.filter((business) => business.id !== businessId))
+    setFeedback('사업 정보를 삭제했습니다.')
+    playTransitionSound()
+  }
+
+  const handleDeleteEvidence = (evidenceId: string) => {
+    removeEvidence(organization.id, evidenceId)
+    setEvidenceDraft((prev) => prev.filter((item) => item.id !== evidenceId))
+    setFeedback('증거 항목을 삭제했습니다.')
+    playTransitionSound()
+  }
+
+  const handleDeleteMapImage = (imageId: string) => {
+    removeMapImage(organization.id, imageId)
+    setMapDraft((prev) => prev.filter((image) => image.id !== imageId))
+    setFeedback('지도 이미지를 삭제했습니다.')
+    playTransitionSound()
+  }
+
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+
+  const handleMapFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    if (!files.length) {
+      return
+    }
+
+    try {
+      if (pendingMapIndex === null) {
+        const mappedFiles = await Promise.all(
+          files.map(async (file) => ({
+            id: createId(`${organization.id}-map`),
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            url: await readFileAsDataUrl(file),
+            notes: '',
+            uploadedAt: new Date().toISOString(),
+            isNew: true,
+          }))
+        )
+        setMapDraft((prev) => [...prev, ...mappedFiles])
+        setFeedback('지도 이미지를 추가했습니다. 저장 버튼을 눌러 반영하세요.')
+      } else {
+        const file = files[0]
+        const dataUrl = await readFileAsDataUrl(file)
+        setMapDraft((prev) => {
+          const next = [...prev]
+          if (!next[pendingMapIndex]) {
+            return next
+          }
+          next[pendingMapIndex] = {
+            ...next[pendingMapIndex],
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            url: dataUrl,
+            uploadedAt: new Date().toISOString(),
+          }
+          return next
+        })
+        setFeedback('지도 이미지를 교체했습니다. 저장 버튼을 눌러 반영하세요.')
+      }
+    } catch (error) {
+      console.error('Failed to read map image file', error)
+      setFeedback('이미지 파일을 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      event.target.value = ''
+      setPendingMapIndex(null)
+    }
+  }
+
+  const requestMapUpload = (index: number | null) => {
+    setPendingMapIndex(index)
+    mapFileInputRef.current?.click()
+  }
+
   const renderInfoTab = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-4">
@@ -220,6 +365,106 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
         <Button onClick={handleSaveInfo}>
           <i className="ri-save-3-line mr-2" /> 기본 정보 저장
         </Button>
+      </div>
+      <div className="md:col-span-2">
+        <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-yellow-200">저장된 데이터 미리보기</h3>
+            <span className="text-xs text-gray-500">각 탭에서 세부 수정 및 삭제 가능합니다.</span>
+          </div>
+          <div className="space-y-4">
+            <section>
+              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+                조직원 ({organizationMembers.length})
+              </h4>
+              {organizationMembers.length > 0 ? (
+                <ul className="space-y-1 text-sm text-gray-300">
+                  {organizationMembers.slice(0, 5).map((member) => (
+                    <li key={member.id} className="flex items-center justify-between">
+                      <span>
+                        {member.name}
+                        {member.rank && <span className="text-gray-500"> · {member.rank}</span>}
+                      </span>
+                      <span className="text-xs text-gray-500">ID: {member.id}</span>
+                    </li>
+                  ))}
+                  {organizationMembers.length > 5 && (
+                    <li className="text-xs text-gray-500">그 외 {organizationMembers.length - 5}명</li>
+                  )}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">저장된 조직원이 없습니다.</p>
+              )}
+            </section>
+            <section>
+              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+                사업체 ({organizationBusinesses.length})
+              </h4>
+              {organizationBusinesses.length > 0 ? (
+                <ul className="space-y-1 text-sm text-gray-300">
+                  {organizationBusinesses.slice(0, 5).map((business) => (
+                    <li key={business.id} className="flex items-center justify-between">
+                      <span>{business.name}</span>
+                      <span className="text-xs text-gray-500">직원 {business.employees}명</span>
+                    </li>
+                  ))}
+                  {organizationBusinesses.length > 5 && (
+                    <li className="text-xs text-gray-500">그 외 {organizationBusinesses.length - 5}곳</li>
+                  )}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">저장된 사업체가 없습니다.</p>
+              )}
+            </section>
+            <section>
+              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+                증거 ({organizationEvidence.length})
+              </h4>
+              {organizationEvidence.length > 0 ? (
+                <ul className="space-y-1 text-sm text-gray-300">
+                  {organizationEvidence.slice(0, 5).map((item) => (
+                    <li key={item.id} className="flex items-center justify-between">
+                      <span>{item.target || '대상 미상'}</span>
+                      <span className="text-xs text-gray-500">ID: {item.id}</span>
+                    </li>
+                  ))}
+                  {organizationEvidence.length > 5 && (
+                    <li className="text-xs text-gray-500">그 외 {organizationEvidence.length - 5}건</li>
+                  )}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">저장된 증거가 없습니다.</p>
+              )}
+            </section>
+            <section>
+              <h4 className="text-sm font-semibold text-yellow-300 uppercase tracking-widest mb-2">
+                지도 이미지 ({organizationMapImages.length})
+              </h4>
+              {organizationMapImages.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {organizationMapImages.slice(0, 4).map((image) => (
+                    <div
+                      key={image.id}
+                      className="relative rounded-lg overflow-hidden border border-yellow-400/20"
+                    >
+                      <img src={image.url} alt={image.title} className="w-full h-24 object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-xs text-gray-200 truncate">
+                        {image.title}
+                      </div>
+                    </div>
+                  ))}
+                  {organizationMapImages.length > 4 && (
+                    <div className="text-xs text-gray-500 col-span-full">
+                      그 외 {organizationMapImages.length - 4}개의 이미지
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">등록된 지도 이미지가 없습니다.</p>
+              )}
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -305,15 +550,22 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               </div>
               <span className="text-sm text-gray-400">ID: {member.id}</span>
             </div>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() =>
-                setMembersDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
-              }
-            >
-              <i className="ri-delete-bin-6-line mr-1" /> 제거
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  setMembersDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
+                }
+              >
+                <i className="ri-close-line mr-1" /> 임시 제거
+              </Button>
+              {persistedMemberIds.has(member.id) && (
+                <Button variant="danger" size="sm" onClick={() => handleDeleteMember(member.id)}>
+                  <i className="ri-delete-bin-6-line mr-1" /> 영구 삭제
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ))}
@@ -445,15 +697,22 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-400">ID: {business.id}</span>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() =>
-                setBusinessDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
-              }
-            >
-              <i className="ri-delete-bin-6-line mr-1" /> 제거
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  setBusinessDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
+                }
+              >
+                <i className="ri-close-line mr-1" /> 임시 제거
+              </Button>
+              {persistedBusinessIds.has(business.id) && (
+                <Button variant="danger" size="sm" onClick={() => handleDeleteBusiness(business.id)}>
+                  <i className="ri-delete-bin-6-line mr-1" /> 영구 삭제
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ))}
@@ -586,15 +845,22 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               </button>
               <span className="text-sm text-gray-400">이미지 {item.imagesText ? item.imagesText.split('\n').filter(Boolean).length : 0}개</span>
             </div>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() =>
-                setEvidenceDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
-              }
-            >
-              <i className="ri-delete-bin-6-line mr-1" /> 제거
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  setEvidenceDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
+                }
+              >
+                <i className="ri-close-line mr-1" /> 임시 제거
+              </Button>
+              {persistedEvidenceIds.has(item.id) && (
+                <Button variant="danger" size="sm" onClick={() => handleDeleteEvidence(item.id)}>
+                  <i className="ri-delete-bin-6-line mr-1" /> 영구 삭제
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ))}
@@ -627,6 +893,103 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     </div>
   )
 
+  const renderMapTab = () => (
+    <div className="space-y-4">
+      <input
+        ref={mapFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleMapFileChange}
+      />
+      {mapDraft.length > 0 ? (
+        mapDraft.map((image, index) => (
+          <div
+            key={image.id}
+            className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-4 space-y-4"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Input
+                  label="지도 제목"
+                  value={image.title}
+                  onChange={(event) =>
+                    setMapDraft((prev) => {
+                      const next = [...prev]
+                      next[index] = { ...next[index], title: event.target.value }
+                      return next
+                    })
+                  }
+                />
+                <TextArea
+                  label="비고"
+                  value={image.notes}
+                  onChange={(event) =>
+                    setMapDraft((prev) => {
+                      const next = [...prev]
+                      next[index] = { ...next[index], notes: event.target.value }
+                      return next
+                    })
+                  }
+                />
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>업데이트: {new Date(image.uploadedAt).toLocaleString()}</p>
+                  <p>{image.isNew ? '새로 추가된 이미지' : '저장된 이미지'}</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20">
+                  <img src={image.url} alt={image.title} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => requestMapUpload(index)}>
+                    <i className="ri-refresh-line mr-1" /> 이미지 교체
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => window.open(image.url, '_blank', 'noopener,noreferrer')}
+                  >
+                    <i className="ri-external-link-line mr-1" /> 새 창에서 보기
+                  </Button>
+                  {persistedMapIds.has(image.id) ? (
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteMapImage(image.id)}>
+                      <i className="ri-delete-bin-6-line mr-1" /> 영구 삭제
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        setMapDraft((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
+                      }
+                    >
+                      <i className="ri-close-line mr-1" /> 임시 제거
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="bg-gray-900/40 border border-dashed border-yellow-400/30 rounded-xl p-8 text-center space-y-3">
+          <i className="ri-map-pin-2-line text-4xl text-yellow-400" />
+          <p className="text-sm text-gray-400">등록된 지도 이미지가 없습니다. 새 이미지를 업로드해보세요.</p>
+        </div>
+      )}
+
+      <div className="flex justify-between">
+        <Button variant="secondary" onClick={() => requestMapUpload(null)}>
+          <i className="ri-map-pin-add-line mr-2" /> 지도 이미지 추가
+        </Button>
+        <Button onClick={handleSaveMapImages}>
+          <i className="ri-save-3-line mr-2" /> 지도 이미지 저장
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <div className="p-8 space-y-6">
@@ -654,6 +1017,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             { id: 'members', label: '조직원', icon: 'ri-team-line' },
             { id: 'businesses', label: '사업체', icon: 'ri-store-3-line' },
             { id: 'evidence', label: '증거', icon: 'ri-file-list-line' },
+            { id: 'maps', label: '지도 관리', icon: 'ri-map-pin-2-line' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -682,6 +1046,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           {activeTab === 'members' && renderMembersTab()}
           {activeTab === 'businesses' && renderBusinessesTab()}
           {activeTab === 'evidence' && renderEvidenceTab()}
+          {activeTab === 'maps' && renderMapTab()}
         </div>
 
         {feedback && (

@@ -7,6 +7,7 @@ const LoginPage = lazy(() => import('../pages/login/page'));
 const LoadingPage = lazy(() => import('../pages/loading/page'));
 const DashboardPage = lazy(() => import('../pages/dashboard/page'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
+const AccountManagerPage = lazy(() => import('../pages/admin/page'));
 
 const routes: RouteObject[] = [
   {
@@ -20,6 +21,10 @@ const routes: RouteObject[] = [
   {
     path: '/dashboard',
     element: <DashboardPage />
+  },
+  {
+    path: '/admin/accounts',
+    element: <AccountManagerPage />
   },
   {
     path: '/home',

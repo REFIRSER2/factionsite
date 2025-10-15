@@ -17,33 +17,75 @@ export default function LoadingPage() {
       setUser(JSON.parse(userData));
     }
 
-    // 배경음악 시작
     playBackgroundMusic();
 
-    // 랜덤 로딩 시간 (3-5초)
-    const loadingTime = Math.random() * 2000 + 3000; // 3000ms ~ 5000ms
-    const startTime = Date.now();
+    const MAX_DURATION = 6000; // ms
+    const startTime = performance.now();
+    let completeTimeout: number | undefined;
+    let redirectTimeout: number | undefined;
+    let forcedFinishTimeout: number | undefined;
+    let isFinished = false;
+    let intervalId: number | undefined;
 
-    const progressInterval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / loadingTime) * 100, 100);
-      
-      setProgress(newProgress);
+    const finalize = () => {
+      if (isFinished) return;
+      isFinished = true;
+      setProgress(100);
 
-      if (newProgress >= 100) {
-        clearInterval(progressInterval);
-        setTimeout(() => {
-          setShowWelcome(true);
-          playTransitionSound();
-          
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 3000);
-        }, 500);
+      completeTimeout = window.setTimeout(() => {
+        setShowWelcome(true);
+        playTransitionSound();
+
+        redirectTimeout = window.setTimeout(() => {
+          setShowWelcome(false);
+          navigate('/dashboard', { replace: true });
+        }, 2500);
+      }, 400);
+    };
+
+    intervalId = window.setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          finalize();
+          return 100;
+        }
+
+        const elapsed = performance.now() - startTime;
+        const remainingTime = Math.max(MAX_DURATION - elapsed, 0);
+        const progressHeadroom = 100 - prev;
+        const intensity = Math.max(5, (progressHeadroom / 100) * 30);
+        const increment = Math.min(progressHeadroom, Math.random() * intensity + 5);
+        const nextValue = Math.min(100, prev + increment);
+
+        if (nextValue >= 100 || remainingTime <= 250) {
+          if (intervalId !== undefined) {
+            window.clearInterval(intervalId);
+          }
+          finalize();
+          return 100;
+        }
+
+        return nextValue;
+      });
+    }, 250);
+
+    forcedFinishTimeout = window.setTimeout(() => {
+      if (!isFinished) {
+        if (intervalId !== undefined) {
+          window.clearInterval(intervalId);
+        }
+        finalize();
       }
-    }, 50); // 50ms마다 업데이트로 더 부드럽게
+    }, MAX_DURATION);
 
-    return () => clearInterval(progressInterval);
+    return () => {
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+      }
+      if (completeTimeout) window.clearTimeout(completeTimeout);
+      if (redirectTimeout) window.clearTimeout(redirectTimeout);
+      if (forcedFinishTimeout) window.clearTimeout(forcedFinishTimeout);
+    };
   }, [navigate, playBackgroundMusic, playTransitionSound]);
 
   return (

@@ -21,7 +21,7 @@ interface OrganizationModalProps {
 
 type EditableMember = Omit<Member, 'age'> & { age: string }
 type EditableBusiness = Omit<Business, 'employees'> & { employees: string }
-type EditableEvidence = EvidenceItem & { imagesText: string }
+type EditableEvidence = EvidenceItem
 
 const RELATIONSHIP_OPTIONS: { value: OrganizationRelationship; label: string }[] = [
   { value: 'friendly', label: '우호' },
@@ -113,6 +113,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
   const [feedback, setFeedback] = useState<string | null>(null)
   const [pendingMapIndex, setPendingMapIndex] = useState<number | null>(null)
   const mapFileInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
     if (!organization || !organizationId) {
@@ -150,12 +151,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
     if (!organization || !organizationId) {
       return
     }
-    setEvidenceDraft(
-      organizationEvidence.map((item) => ({
-        ...item,
-        imagesText: item.images.join('\n'),
-      }))
-    )
+    setEvidenceDraft(organizationEvidence.map((item) => ({ ...item })))
   }, [organization, organizationId, organizationEvidence])
 
   useEffect(() => {
@@ -233,10 +229,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
   const handleSaveEvidence = () => {
     const sanitized = evidenceDraft.map((item) => ({
       ...item,
-      images: item.imagesText
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0),
+      images: item.images.filter((image) => image.trim().length > 0),
     }))
     setEvidence(organization.id, sanitized)
     setFeedback('증거 목록을 저장했습니다.')
@@ -287,6 +280,115 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       reader.onerror = () => reject(reader.error)
       reader.readAsDataURL(file)
     })
+
+  const triggerFileInput = (key: string) => {
+    const target = fileInputRefs.current[key]
+    if (target) {
+      target.click()
+    }
+  }
+
+  const handleMemberPhotoUpload = async (index: number, event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setMembersDraft((prev) => {
+        const next = [...prev]
+        if (!next[index]) {
+          return prev
+        }
+        next[index] = {
+          ...next[index],
+          photo: dataUrl,
+        }
+        return next
+      })
+      setFeedback('프로필 이미지를 추가했습니다. 저장 버튼을 눌러 반영하세요.')
+    } catch (error) {
+      console.error('Failed to read member photo file', error)
+      setFeedback('이미지 파일을 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  const handleBusinessImageUpload = async (
+    index: number,
+    key: 'image1' | 'image2',
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setBusinessDraft((prev) => {
+        const next = [...prev]
+        if (!next[index]) {
+          return prev
+        }
+        next[index] = {
+          ...next[index],
+          [key]: dataUrl,
+        }
+        return next
+      })
+      setFeedback('사업체 이미지를 추가했습니다. 저장 버튼을 눌러 반영하세요.')
+    } catch (error) {
+      console.error('Failed to read business image file', error)
+      setFeedback('이미지 파일을 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  const handleEvidenceImageUpload = async (index: number, event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    if (!files.length) {
+      return
+    }
+
+    try {
+      const dataUrls = await Promise.all(files.map((file) => readFileAsDataUrl(file)))
+      setEvidenceDraft((prev) => {
+        const next = [...prev]
+        if (!next[index]) {
+          return prev
+        }
+        next[index] = {
+          ...next[index],
+          images: [...next[index].images, ...dataUrls],
+        }
+        return next
+      })
+      setFeedback('증거 이미지를 추가했습니다. 저장 버튼을 눌러 반영하세요.')
+    } catch (error) {
+      console.error('Failed to read evidence image file', error)
+      setFeedback('이미지 파일을 불러오지 못했습니다. 다시 시도해주세요.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  const handleRemoveEvidenceImage = (itemId: string, imageIndex: number) => {
+    setEvidenceDraft((prev) =>
+      prev.map((item) => {
+        if (item.id !== itemId) {
+          return item
+        }
+        return {
+          ...item,
+          images: item.images.filter((_, currentIndex) => currentIndex !== imageIndex),
+        }
+      })
+    )
+  }
 
   const handleMapFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? [])
@@ -389,7 +491,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
       <div className="md:col-span-2">
         <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-yellow-200">저장된 데이터 미리보기</h3>
+            <h3 className="text-lg font-semibold text-yellow-200">데이터 요약</h3>
             <span className="text-xs text-gray-500">각 탭에서 세부 수정 및 삭제 가능합니다.</span>
           </div>
           <div className="space-y-4">
@@ -413,7 +515,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   )}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">저장된 조직원이 없습니다.</p>
+                <p className="text-sm text-gray-500">조직원 목록이 비어 있습니다.</p>
               )}
             </section>
             <section>
@@ -433,7 +535,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   )}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">저장된 사업체가 없습니다.</p>
+                <p className="text-sm text-gray-500">사업체 목록이 비어 있습니다.</p>
               )}
             </section>
             <section>
@@ -453,7 +555,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   )}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">저장된 증거가 없습니다.</p>
+                <p className="text-sm text-gray-500">증거 목록이 비어 있습니다.</p>
               )}
             </section>
             <section>
@@ -541,17 +643,57 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                 })
               }
             />
-            <Input
-              label="프로필 사진 URL"
-              value={member.photo}
-              onChange={(event) =>
-                setMembersDraft((prev) => {
-                  const next = [...prev]
-                  next[index] = { ...next[index], photo: event.target.value }
-                  return next
-                })
-              }
-            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-yellow-400 mb-2">프로필 사진</label>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-400/30 bg-gray-900 flex items-center justify-center">
+                {member.photo ? (
+                  <img src={member.photo} alt={member.name || 'profile'} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-500">이미지 없음</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={(element) => {
+                    if (element) {
+                      fileInputRefs.current[`${member.id}-photo`] = element
+                    } else {
+                      delete fileInputRefs.current[`${member.id}-photo`]
+                    }
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handleMemberPhotoUpload(index, event)}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => triggerFileInput(`${member.id}-photo`)}
+                >
+                  <i className="ri-image-add-line mr-1" /> 이미지 선택
+                </Button>
+                {member.photo && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      setMembersDraft((prev) => {
+                        const next = [...prev]
+                        next[index] = { ...next[index], photo: '' }
+                        return next
+                      })
+                    }
+                  >
+                    <i className="ri-delete-bin-6-line mr-1" /> 제거
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
           <TextArea
             label="비고"
@@ -567,7 +709,11 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
               <div className="w-16 h-16 rounded-full overflow-hidden border border-yellow-400/30">
-                <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                {member.photo ? (
+                  <img src={member.photo} alt={member.name || 'profile'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-900">이미지 없음</div>
+                )}
               </div>
               <span className="text-sm text-gray-400">ID: {member.id}</span>
             </div>
@@ -619,7 +765,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
 
       <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">저장된 조직원</h3>
+          <h3 className="text-lg font-semibold text-yellow-200">조직원 목록</h3>
           <span className="text-xs text-gray-500">{organizationMembers.length}명</span>
         </div>
         {organizationMembers.length > 0 ? (
@@ -670,7 +816,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500 min-h-[200px]">
-            저장된 조직원 정보가 없습니다. 정보를 입력 후 저장해보세요.
+            조직원 목록이 없습니다. 정보를 입력 후 저장해보세요.
           </div>
         )}
       </div>
@@ -753,28 +899,104 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="대표 이미지 URL"
-              value={business.image1}
-              onChange={(event) =>
-                setBusinessDraft((prev) => {
-                  const next = [...prev]
-                  next[index] = { ...next[index], image1: event.target.value }
-                  return next
-                })
-              }
-            />
-            <Input
-              label="추가 이미지 URL"
-              value={business.image2 ?? ''}
-              onChange={(event) =>
-                setBusinessDraft((prev) => {
-                  const next = [...prev]
-                  next[index] = { ...next[index], image2: event.target.value }
-                  return next
-                })
-              }
-            />
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-yellow-400">대표 이미지</label>
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900 flex items-center justify-center">
+                {business.image1 ? (
+                  <img src={business.image1} alt={`${business.name || '사업체'} 대표`} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-500">이미지가 선택되지 않았습니다.</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={(element) => {
+                    if (element) {
+                      fileInputRefs.current[`${business.id}-image1`] = element
+                    } else {
+                      delete fileInputRefs.current[`${business.id}-image1`]
+                    }
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handleBusinessImageUpload(index, 'image1', event)}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => triggerFileInput(`${business.id}-image1`)}
+                >
+                  <i className="ri-image-add-line mr-1" /> 이미지 선택
+                </Button>
+                {business.image1 && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      setBusinessDraft((prev) => {
+                        const next = [...prev]
+                        next[index] = { ...next[index], image1: '' }
+                        return next
+                      })
+                    }
+                  >
+                    <i className="ri-delete-bin-6-line mr-1" /> 제거
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-yellow-400">추가 이미지</label>
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900 flex items-center justify-center">
+                {business.image2 ? (
+                  <img src={business.image2} alt={`${business.name || '사업체'} 추가`} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-500">선택된 이미지가 없습니다.</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={(element) => {
+                    if (element) {
+                      fileInputRefs.current[`${business.id}-image2`] = element
+                    } else {
+                      delete fileInputRefs.current[`${business.id}-image2`]
+                    }
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handleBusinessImageUpload(index, 'image2', event)}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => triggerFileInput(`${business.id}-image2`)}
+                >
+                  <i className="ri-image-add-line mr-1" /> 이미지 선택
+                </Button>
+                {business.image2 && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      setBusinessDraft((prev) => {
+                        const next = [...prev]
+                        next[index] = { ...next[index], image2: '' }
+                        return next
+                      })
+                    }
+                  >
+                    <i className="ri-delete-bin-6-line mr-1" /> 제거
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-400">ID: {business.id}</span>
@@ -828,7 +1050,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
 
       <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">저장된 사업체</h3>
+          <h3 className="text-lg font-semibold text-yellow-200">사업체 목록</h3>
           <span className="text-xs text-gray-500">{organizationBusinesses.length}곳</span>
         </div>
         {organizationBusinesses.length > 0 ? (
@@ -889,7 +1111,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500 min-h-[200px]">
-            저장된 사업체 정보가 없습니다. 정보를 입력 후 저장해보세요.
+            사업체 목록이 없습니다. 정보를 입력 후 저장해보세요.
           </div>
         )}
       </div>
@@ -960,17 +1182,64 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             }
           />
 
-          <TextArea
-            label="이미지 URL 목록 (줄바꿈으로 구분)"
-            value={item.imagesText}
-            onChange={(event) =>
-              setEvidenceDraft((prev) => {
-                const next = [...prev]
-                next[index] = { ...next[index], imagesText: event.target.value }
-                return next
-              })
-            }
-          />
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-yellow-400">이미지 첨부</label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={(element) => {
+                  if (element) {
+                    fileInputRefs.current[`${item.id}-evidence`] = element
+                  } else {
+                    delete fileInputRefs.current[`${item.id}-evidence`]
+                  }
+                }}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(event) => handleEvidenceImageUpload(index, event)}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => triggerFileInput(`${item.id}-evidence`)}
+              >
+                <i className="ri-image-add-line mr-1" /> 이미지 추가
+              </Button>
+              {item.images.length > 0 && (
+                <span className="text-xs text-gray-400">{item.images.length}개 첨부됨</span>
+              )}
+            </div>
+            {item.images.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {item.images.map((imageUrl, imageIndex) => (
+                  <div key={`${item.id}-draft-image-${imageIndex}`} className="space-y-2">
+                    <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                      <img
+                        src={imageUrl}
+                        alt={`${item.id} evidence ${imageIndex + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleRemoveEvidenceImage(item.id, imageIndex)}
+                    >
+                      <i className="ri-delete-bin-6-line mr-1" /> 제거
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 border border-dashed border-yellow-400/20 rounded-lg p-3 bg-black/20">
+                첨부된 이미지가 없습니다.
+              </p>
+            )}
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -994,7 +1263,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
               >
                 {item.used ? '사용됨' : '미사용'}
               </button>
-              <span className="text-sm text-gray-400">이미지 {item.imagesText ? item.imagesText.split('\n').filter(Boolean).length : 0}개</span>
+              <span className="text-sm text-gray-400">이미지 {item.images.length}개</span>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -1020,19 +1289,18 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
         <Button
           variant="secondary"
           onClick={() =>
-            setEvidenceDraft((prev) => [
-              ...prev,
-              {
-                id: createId(`${organization.id}-evd`),
-                used: false,
-                target: '',
-                location: '',
-                additionalPersons: '',
-                details: '',
-                images: [],
-                imagesText: '',
-              },
-            ])
+        setEvidenceDraft((prev) => [
+          ...prev,
+          {
+            id: createId(`${organization.id}-evd`),
+            used: false,
+            target: '',
+            location: '',
+            additionalPersons: '',
+            details: '',
+            images: [],
+          },
+        ])
           }
         >
           <i className="ri-add-circle-line mr-2" /> 증거 추가
@@ -1045,7 +1313,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
 
       <div className="bg-gray-900/60 border border-yellow-400/20 rounded-xl p-6 flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-yellow-200">저장된 증거</h3>
+          <h3 className="text-lg font-semibold text-yellow-200">증거 목록</h3>
           <span className="text-xs text-gray-500">{organizationEvidence.length}건</span>
         </div>
         {organizationEvidence.length > 0 ? (
@@ -1081,20 +1349,37 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   {item.details || '세부 내용이 입력되지 않았습니다.'}
                 </p>
                 {item.images.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1 text-xs text-yellow-200 break-words">
-                    {item.images.map((imageUrl) => (
-                      <li key={imageUrl}>{imageUrl}</li>
+                  <div className="grid grid-cols-2 gap-2">
+                    {item.images.map((imageUrl, imageIndex) => (
+                      <div key={`${item.id}-image-${imageIndex}`} className="space-y-2">
+                        <div className="relative aspect-video rounded-lg overflow-hidden border border-yellow-400/20 bg-gray-900">
+                          <img
+                            src={imageUrl}
+                            alt={`${item.target || '증거'} 이미지 ${imageIndex + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => window.open(imageUrl, '_blank', 'noopener,noreferrer')}
+                        >
+                          <i className="ri-external-link-line mr-1" /> 새 창에서 보기
+                        </Button>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 ) : (
-                  <p className="text-xs text-gray-500">등록된 이미지가 없습니다.</p>
+                  <p className="text-xs text-gray-500">첨부된 이미지가 없습니다.</p>
                 )}
               </div>
             ))}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500 min-h-[200px]">
-            저장된 증거 정보가 없습니다. 증거를 추가하고 저장해보세요.
+            증거 목록이 없습니다. 증거를 추가하고 저장해보세요.
           </div>
         )}
       </div>
@@ -1143,7 +1428,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
                   />
                   <div className="text-xs text-gray-500 space-y-1">
                     <p>업데이트: {new Date(image.uploadedAt).toLocaleString()}</p>
-                    <p>{image.isNew ? '새로 추가된 이미지' : '저장된 이미지'}</p>
+                    <p>{image.isNew ? '새로 추가된 이미지' : '등록된 이미지'}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -1236,7 +1521,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             </div>
           ) : (
             <div className="min-h-[240px] flex items-center justify-center text-sm text-gray-500">
-              저장된 이미지 중 하나를 선택하면 크게 볼 수 있습니다.
+              지도 목록에서 이미지를 선택하면 크게 볼 수 있습니다.
             </div>
           )}
         </div>
@@ -1289,7 +1574,7 @@ export const OrganizationModal = ({ organizationId, isOpen, onClose }: Organizat
             </div>
           ) : (
             <div className="min-h-[160px] flex items-center justify-center text-sm text-gray-500">
-              저장된 지도 이미지가 없습니다. 새로 추가하고 저장해보세요.
+              등록된 지도 이미지가 없습니다. 새로 추가해보세요.
             </div>
           )}
         </div>

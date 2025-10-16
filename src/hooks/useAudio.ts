@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface AudioSettings {
   backgroundVolume: number;
@@ -56,38 +56,38 @@ export const useAudio = () => {
     }
   }, [settings]);
 
-  const playBackgroundMusic = () => {
+  const playBackgroundMusic = useCallback(() => {
     if (backgroundAudioRef.current && !settings.isMuted) {
       backgroundAudioRef.current.play().catch(() => {
         // 자동 재생 정책으로 인한 에러 무시
       });
     }
-  };
+  }, [settings.isMuted]);
 
-  const playClickSound = () => {
+  const playClickSound = useCallback(() => {
     if (clickSoundRef.current && !settings.isMuted) {
       clickSoundRef.current.currentTime = 0;
       clickSoundRef.current.play().catch(() => {});
     }
-  };
+  }, [settings.isMuted]);
 
-  const playTransitionSound = () => {
+  const playTransitionSound = useCallback(() => {
     if (transitionSoundRef.current && !settings.isMuted) {
       transitionSoundRef.current.currentTime = 0;
       transitionSoundRef.current.play().catch(() => {});
     }
-  };
+  }, [settings.isMuted]);
 
-  const playBackSound = () => {
+  const playBackSound = useCallback(() => {
     if (backSoundRef.current && !settings.isMuted) {
       backSoundRef.current.currentTime = 0;
       backSoundRef.current.play().catch(() => {});
     }
-  };
+  }, [settings.isMuted]);
 
-  const updateSettings = (newSettings: Partial<AudioSettings>) => {
+  const updateSettings = useCallback((newSettings: Partial<AudioSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
-  };
+  }, []);
 
   return {
     settings,

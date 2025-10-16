@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Input } from '../../components/base/Input';
 import { Button } from '../../components/base/Button';
-import { users } from '../../mocks/users';
 import { useAudio } from '../../hooks/useAudio';
+import { useAccounts } from '../../context/AccountContext';
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({ id: '', password: '' });
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [shake, setShake] = useState(false);
   const navigate = useNavigate();
   const { playClickSound, playTransitionSound } = useAudio();
+  const { accounts } = useAccounts();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -35,7 +36,7 @@ export default function LoginPage() {
 
     if (isLocked) return;
 
-    const user = users.find(u => u.id === credentials.id && u.password === credentials.password);
+    const user = accounts.find(u => u.id === credentials.id && u.password === credentials.password);
 
     if (user) {
       setStatus('success');
